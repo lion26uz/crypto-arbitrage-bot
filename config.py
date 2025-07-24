@@ -2,7 +2,7 @@ def parse_binance(data):
     return float(data["price"])
 
 def parse_bybit(data):
-    return float(data["result"]["price"])
+    return float(data["result"][0]["price"]) if "result" in data and data["result"] else None
 
 def parse_okx(data):
     return float(data["data"][0]["last"])
