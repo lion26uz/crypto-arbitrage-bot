@@ -1,41 +1,25 @@
-from parser import parse_binance, parse_bybit, parse_okx, parse_bestchange
-
 settings = {
-    "check_interval": 60,  # интервал в секундах между проверками
-
-    "min_profit_percent": 3,  # минимальный процент прибыли для уведомления
-
-    "pairs": [
-        ["USDC", "PLN"],
-        ["BTC", "USDC"],
-        ["ETH", "USDC"],
-        ["SOL", "USDC"],
-        ["USDT", "PLN"],
-        ["USDT", "BTC"],
-        ["USDT", "ETH"],
-        ["USDT", "SOL"],
-        ["BTC", "ETH"],
-        ["BTC", "SOL"],
-        ["ETH", "SOL"]
-    ],
-
     "exchanges": {
-        "binance": {
-            "parser": parse_binance
-        },
         "bybit": {
-            "parser": parse_bybit
+            "url": "https://api.bybit.com/v2/public/tickers?symbol={pair}",
+            "parser": lambda response: float(response.json()["result"][0]["last_price"]),
+            "pairs": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "USDCPLN", "USDTPLN"]
         },
         "okx": {
-            "parser": parse_okx
+            "url": "https://www.okx.com/api/v5/market/ticker?instId={pair}",
+            "parser": lambda response: float(response.json()["data"][0]["last"]),
+            "pairs": ["BTC-USDT", "ETH-USDT", "SOL-USDT", "USDC-PLN", "USDT-PLN"]
         },
-        "bestchange": {
-            "parser": parse_bestchange
+        "binance": {
+            "url": "https://api.binance.com/api/v3/ticker/price?symbol={pair}",
+            "parser": lambda response: float(response.json()["price"]),
+            "pairs": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "USDCPLN", "USDTPLN"]
         }
     },
-
+    "check_interval": 60,  # интервал в секундах
+    "min_profit_percent": 3.0,  # минимальный процент прибыли
     "telegram": {
-        "token": "вставь_сюда_свой_token",
-        "chat_id": 123456789
+        "token": "вставь_сюда_свой_token",  # вставь сюда свой токен
+        "chat_id": 123456789               # вставь сюда свой chat_id
     }
 }
