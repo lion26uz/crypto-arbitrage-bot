@@ -1,8 +1,7 @@
 import requests
 
-token = "6103456789:AAExampleTokenYourBot123456"  # сюда твой токен
-chat_id = "123456789"  # сюда твой chat_id
-
+token = "6387414087:AAFAP6KaXq8SzsJJGpEIGnZ2JvqHRNQAkTY"
+chat_id = "5980085163"
 message = "✅ Telegram уведомление работает!"
 
 url = f"https://api.telegram.org/bot{token}/sendMessage"
