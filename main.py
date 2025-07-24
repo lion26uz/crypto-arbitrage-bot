@@ -1,35 +1,52 @@
 import time
-import requests
+from notifier import send_telegram_message
 from config import settings
+from exchanges import fetch_price
 
-def fetch_price(exchange, pair):
-    url = settings["exchanges"][exchange]["url"].format(pair=pair)
-    response = requests.get(url)
-    if response.status_code == 200:
-        return settings["exchanges"][exchange]["parser"](response.json())
-    return None
+pairs_to_check = [
+    ("BTC/USDC", ["binance", "bybit", "okx"]),
+    ("ETH/USDC", ["binance", "bybit", "okx"]),
+    ("SOL/USDC", ["binance", "bybit", "okx"]),
+    ("USDC/PLN", ["binance", "bybit", "okx"]),
+]
 
 def check_arbitrage(pair):
+    base, quote = pair.split('/')
     prices = {}
+
     for exchange in settings["exchanges"]:
-        price = fetch_price(exchange, pair)
-        if price:
-            prices[exchange] = price
+        if pair in settings["exchanges"][exchange]["symbols"]:
+            try:
+                price = fetch_price(exchange, pair)
+                if price:
+                    prices[exchange] = price
+            except Exception as e:
+                print(f"Ошибка при получении цены с {exchange}: {e}")
 
     if len(prices) < 2:
         return
 
-    sorted_prices = sorted(prices.items(), key=lambda x: x[1])
-    buy_exchange, buy_price = sorted_prices[0]
-    sell_exchange, sell_price = sorted_prices[-1]
-    profit = ((sell_price - buy_price) / buy_price) * 100
+    min_exchange = min(prices, key=prices.get)
+    max_exchange = max(prices, key=prices.get)
 
-    if profit >= settings["min_profit_percent"]:
-        print(f"[!] Арбитраж: купить на {buy_exchange} за {buy_price}, продать на {sell_exchange} за {sell_price} → Профит: {profit:.2f}%")
+    buy_price = prices[min_exchange]
+    sell_price = prices[max_exchange]
+    profit_percent = ((sell_price - buy_price) / buy_price) * 100
+
+    if profit_percent >= settings["min_profit_percent"]:
+        message = (
+            f"🔁 Арбитраж обнаружен:\n"
+            f"{pair}\n"
+            f"Купить на {min_exchange}: {buy_price:.2f}\n"
+            f"Продать на {max_exchange}: {sell_price:.2f}\n"
+            f"📈 Профит: {profit_percent:.2f}%"
+        )
+        print(message)
+        send_telegram_message(message)
 
 if __name__ == "__main__":
     print("Бот запущен.")
     while True:
-        for pair in settings["pairs"]:
+        for pair, exchanges in pairs_to_check:
             check_arbitrage(pair)
-        time.sleep(settings["check_interval"])
+        time.sleep(settings["check_interval_seconds"])
